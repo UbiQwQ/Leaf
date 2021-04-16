@@ -43,7 +43,9 @@ public class SnowflakeIDGenImpl implements IDGen {
      */
     public SnowflakeIDGenImpl(String zkAddress, int port, long twepoch) {
         this.twepoch = twepoch;
+        //校验：起始时间twepoch不能晚于当前时间
         Preconditions.checkArgument(timeGen() > twepoch, "Snowflake not support twepoch gt currentTime");
+        //获取应用服务器ip
         final String ip = Utils.getIp();
         SnowflakeZookeeperHolder holder = new SnowflakeZookeeperHolder(ip, String.valueOf(port), zkAddress);
         LOGGER.info("twepoch:{} ,ip:{} ,zkAddress:{} port:{}", twepoch, ip, zkAddress, port);

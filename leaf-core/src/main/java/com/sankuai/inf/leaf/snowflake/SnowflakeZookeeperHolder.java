@@ -39,6 +39,12 @@ public class SnowflakeZookeeperHolder {
     private String connectionString;
     private long lastUpdateTime;
 
+    /**
+     * 构造器
+     * @param ip 应用服务器ip
+     * @param port leaf.snowflake.port
+     * @param connectionString zkAddress
+     */
     public SnowflakeZookeeperHolder(String ip, String port, String connectionString) {
         this.ip = ip;
         this.port = port;
@@ -48,7 +54,9 @@ public class SnowflakeZookeeperHolder {
 
     public boolean init() {
         try {
-            CuratorFramework curator = createWithOptions(connectionString, new RetryUntilElapsed(1000, 4), 10000, 6000);
+            CuratorFramework curator = createWithOptions(connectionString,
+                    new RetryUntilElapsed(1000, 4),
+                    10000, 6000);
             curator.start();
             Stat stat = curator.checkExists().forPath(PATH_FOREVER);
             if (stat == null) {
@@ -60,8 +68,10 @@ public class SnowflakeZookeeperHolder {
                 ScheduledUploadData(curator, zk_AddressNode);
                 return true;
             } else {
-                Map<String, Integer> nodeMap = Maps.newHashMap();//ip:port->00001
-                Map<String, String> realNode = Maps.newHashMap();//ip:port->(ipport-000001)
+                //ip:port->00001
+                Map<String, Integer> nodeMap = Maps.newHashMap();
+                //ip:port->(ipport-000001)
+                Map<String, String> realNode = Maps.newHashMap();
                 //存在根节点,先检查是否有属于自己的根节点
                 List<String> keys = curator.getChildren().forPath(PATH_FOREVER);
                 for (String key : keys) {
@@ -73,7 +83,8 @@ public class SnowflakeZookeeperHolder {
                 if (workerid != null) {
                     //有自己的节点,zk_AddressNode=ip:port
                     zk_AddressNode = PATH_FOREVER + "/" + realNode.get(listenAddress);
-                    workerID = workerid;//启动worder时使用会使用
+                    //启动worder时使用会使用
+                    workerID = workerid;
                     if (!checkInitTimeStamp(curator, zk_AddressNode)) {
                         throw new CheckLastTimeException("init timestamp check error,forever node timestamp gt this node time");
                     }
@@ -108,7 +119,8 @@ public class SnowflakeZookeeperHolder {
     }
 
     private void doService(CuratorFramework curator) {
-        ScheduledUploadData(curator, zk_AddressNode);// /snowflake_forever/ip:port-000000001
+        // /snowflake_forever/ip:port-000000001
+        ScheduledUploadData(curator, zk_AddressNode);
     }
 
     private void ScheduledUploadData(final CuratorFramework curator, final String zk_AddressNode) {
@@ -144,7 +156,9 @@ public class SnowflakeZookeeperHolder {
      */
     private String createNode(CuratorFramework curator) throws Exception {
         try {
-            return curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(PATH_FOREVER + "/" + listenAddress + "-", buildData().getBytes());
+            return curator.create().creatingParentsIfNeeded()
+                    .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                    .forPath(PATH_FOREVER + "/" + listenAddress + "-", buildData().getBytes());
         } catch (Exception e) {
             LOGGER.error("create node error msg {} ", e.getMessage());
             throw e;
