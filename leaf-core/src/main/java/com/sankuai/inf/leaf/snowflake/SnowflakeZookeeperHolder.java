@@ -28,12 +28,15 @@ import java.util.concurrent.TimeUnit;
 
 public class SnowflakeZookeeperHolder {
     private static final Logger LOGGER = LoggerFactory.getLogger(SnowflakeZookeeperHolder.class);
-    private String zk_AddressNode = null;//保存自身的key  ip:port-000000001
-    private String listenAddress = null;//保存自身的key ip:port
+    /** 保存自身的key  ip:port-000000001 */
+    private String zk_AddressNode = null;
+    /** 保存自身的key ip:port */
+    private String listenAddress = null;
     private int workerID;
     private static final String PREFIX_ZK_PATH = "/snowflake/" + PropertyFactory.getProperties().getProperty("leaf.name");
     private static final String PROP_PATH = System.getProperty("java.io.tmpdir") + File.separator + PropertyFactory.getProperties().getProperty("leaf.name") + "/leafconf/{port}/workerID.properties";
-    private static final String PATH_FOREVER = PREFIX_ZK_PATH + "/forever";//保存所有数据持久的节点
+    /** 保存所有数据持久的节点 */
+    private static final String PATH_FOREVER = PREFIX_ZK_PATH + "/forever";
     private String ip;
     private String port;
     private String connectionString;
@@ -123,7 +126,13 @@ public class SnowflakeZookeeperHolder {
         ScheduledUploadData(curator, zk_AddressNode);
     }
 
+    /**
+     * 定时上报本机时间给forever节点
+     * @param curator curator
+     * @param zk_AddressNode zk节点路径
+     */
     private void ScheduledUploadData(final CuratorFramework curator, final String zk_AddressNode) {
+        //每3s上报数据
         Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
@@ -136,7 +145,7 @@ public class SnowflakeZookeeperHolder {
             public void run() {
                 updateNewData(curator, zk_AddressNode);
             }
-        }, 1L, 3L, TimeUnit.SECONDS);//每3s上报数据
+        }, 1L, 3L, TimeUnit.SECONDS);
 
     }
 
@@ -148,8 +157,7 @@ public class SnowflakeZookeeperHolder {
     }
 
     /**
-     * 创建持久顺序节点 ,并把节点数据放入 value
-     *
+     * 创建持久顺序节点, 并把节点数据放入 value
      * @param curator
      * @return
      * @throws Exception
