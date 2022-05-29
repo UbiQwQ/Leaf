@@ -26,8 +26,10 @@ public class SegmentService {
 
     public SegmentService() throws SQLException, InitException {
         Properties properties = PropertyFactory.getProperties();
+        // 是否开启 segment
         boolean flag = Boolean.parseBoolean(properties.getProperty(Constants.LEAF_SEGMENT_ENABLE, "true"));
         if (flag) {
+            // 开启segment
             // Config dataSource
             dataSource = new DruidDataSource();
             dataSource.setUrl(properties.getProperty(Constants.LEAF_JDBC_URL));
@@ -47,6 +49,7 @@ public class SegmentService {
                 throw new InitException("Segment Service Init Fail");
             }
         } else {
+            // 配置中没开启segment。返回 id=0
             idGen = new ZeroIDGen();
             logger.info("Zero ID Gen Service Init Successfully");
         }

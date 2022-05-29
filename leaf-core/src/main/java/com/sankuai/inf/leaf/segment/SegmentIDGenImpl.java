@@ -38,6 +38,7 @@ public class SegmentIDGenImpl implements IDGen {
      */
     private static final long SEGMENT_DURATION = 15 * 60 * 1000L;
     private ExecutorService service = new ThreadPoolExecutor(5, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new UpdateThreadFactory());
+    /** 是否初始化 */
     private volatile boolean initOK = false;
     private Map<String, SegmentBuffer> cache = new ConcurrentHashMap<String, SegmentBuffer>();
     private IDAllocDao dao;
@@ -61,7 +62,9 @@ public class SegmentIDGenImpl implements IDGen {
         logger.info("Init ...");
         // 确保加载到kv后才初始化成功
         updateCacheFromDb();
+        // 初始化标志改为已初始化
         initOK = true;
+        // 每分钟更新cache任务
         updateCacheFromDbAtEveryMinute();
         return initOK;
     }
@@ -88,6 +91,7 @@ public class SegmentIDGenImpl implements IDGen {
         logger.info("update cache from db");
         StopWatch sw = new Slf4JStopWatch();
         try {
+            // SELECT biz_tag FROM leaf_alloc
             List<String> dbTags = dao.getAllTags();
             if (dbTags == null || dbTags.isEmpty()) {
                 return;
@@ -95,7 +99,7 @@ public class SegmentIDGenImpl implements IDGen {
             List<String> cacheTags = new ArrayList<String>(cache.keySet());
             Set<String> insertTagsSet = new HashSet<>(dbTags);
             Set<String> removeTagsSet = new HashSet<>(cacheTags);
-            //db中新加的tags灌进cache
+            // db中新加的tags灌进cache
             for(int i = 0; i < cacheTags.size(); i++){
                 String tmp = cacheTags.get(i);
                 if(insertTagsSet.contains(tmp)){
