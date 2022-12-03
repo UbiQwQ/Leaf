@@ -69,6 +69,9 @@ public class SegmentIDGenImpl implements IDGen {
         return initOK;
     }
 
+    /**
+     * 每分钟 执行一次:查询数据库更新至缓存
+     */
     private void updateCacheFromDbAtEveryMinute() {
         ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
             @Override
@@ -87,11 +90,14 @@ public class SegmentIDGenImpl implements IDGen {
         }, 60, 60, TimeUnit.SECONDS);
     }
 
+    /**
+     * 查询数据库更新至缓存
+     */
     private void updateCacheFromDb() {
         logger.info("update cache from db");
         StopWatch sw = new Slf4JStopWatch();
         try {
-            // SELECT biz_tag FROM leaf_alloc
+            // sql: SELECT biz_tag FROM leaf_alloc
             List<String> dbTags = dao.getAllTags();
             if (dbTags == null || dbTags.isEmpty()) {
                 return;
@@ -116,7 +122,7 @@ public class SegmentIDGenImpl implements IDGen {
                 cache.put(tag, buffer);
                 logger.info("Add tag {} from db to IdCache, SegmentBuffer {}", tag, buffer);
             }
-            //cache中已失效的tags从cache删除
+            // cache中已失效的tags从cache删除
             for(int i = 0; i < dbTags.size(); i++){
                 String tmp = dbTags.get(i);
                 if(removeTagsSet.contains(tmp)){
