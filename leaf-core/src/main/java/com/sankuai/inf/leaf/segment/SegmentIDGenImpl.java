@@ -102,15 +102,13 @@ public class SegmentIDGenImpl implements IDGen {
             if (dbTags == null || dbTags.isEmpty()) {
                 return;
             }
-            List<String> cacheTags = new ArrayList<String>(cache.keySet());
+            // cache : Map<String, SegmentBuffer> key->biz_tag
+            List<String> cacheTags = new ArrayList<>(cache.keySet());
             Set<String> insertTagsSet = new HashSet<>(dbTags);
             Set<String> removeTagsSet = new HashSet<>(cacheTags);
             // db中新加的tags灌进cache
-            for(int i = 0; i < cacheTags.size(); i++){
-                String tmp = cacheTags.get(i);
-                if(insertTagsSet.contains(tmp)){
-                    insertTagsSet.remove(tmp);
-                }
+            for (String tmp : cacheTags) {
+                insertTagsSet.remove(tmp);
             }
             for (String tag : insertTagsSet) {
                 SegmentBuffer buffer = new SegmentBuffer();
@@ -123,11 +121,8 @@ public class SegmentIDGenImpl implements IDGen {
                 logger.info("Add tag {} from db to IdCache, SegmentBuffer {}", tag, buffer);
             }
             // cache中已失效的tags从cache删除
-            for(int i = 0; i < dbTags.size(); i++){
-                String tmp = dbTags.get(i);
-                if(removeTagsSet.contains(tmp)){
-                    removeTagsSet.remove(tmp);
-                }
+            for (String tmp : dbTags) {
+                removeTagsSet.remove(tmp);
             }
             for (String tag : removeTagsSet) {
                 cache.remove(tag);
@@ -170,6 +165,7 @@ public class SegmentIDGenImpl implements IDGen {
         SegmentBuffer buffer = segment.getBuffer();
         LeafAlloc leafAlloc;
         if (!buffer.isInitOk()) {
+            // sql : UPDATE leaf_alloc SET max_id = max_id + step WHERE biz_tag = #{tag}
             leafAlloc = dao.updateMaxIdAndGetLeafAlloc(key);
             buffer.setStep(leafAlloc.getStep());
             buffer.setMinStep(leafAlloc.getStep());//leafAlloc中的step为DB中的step
@@ -196,6 +192,7 @@ public class SegmentIDGenImpl implements IDGen {
             LeafAlloc temp = new LeafAlloc();
             temp.setKey(key);
             temp.setStep(nextStep);
+            // sql: UPDATE leaf_alloc SET max_id = max_id + #{step} WHERE biz_tag = #{key}
             leafAlloc = dao.updateMaxIdByCustomStepAndGetLeafAlloc(temp);
             buffer.setUpdateTimestamp(System.currentTimeMillis());
             buffer.setStep(nextStep);
